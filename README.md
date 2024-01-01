@@ -7,7 +7,7 @@ The output of the SVG file will contain the envelope in green. It also contains 
 
 ## Example
 A typical 999 Games gamebox, is appr. 122mmx96mmx20mm. Taking 2mm margin:
-- python3 box-envelope.py 124 98 22 box-124_98_22.svg
+- python3 box-envelope.py 124 98 22 1 box-124_98_22_with_tabs.svg
 
 # Dependencies
 The script uses Python3 module svgwrite. Install it through your package manager, e.g.:
