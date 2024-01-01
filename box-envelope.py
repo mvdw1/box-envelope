@@ -7,6 +7,17 @@ cut_color = "red"
 
 # create the flap for the top/bottom sides
 def top_bottom_side_flap(inner_width, inner_height):
+    """
+    This function creates a list with points for the top/bottom flaps
+
+    Args:
+    - points: list of points
+    - inner_width: desired width size
+    - inner_height: desired height size
+
+    Returns:
+    list of point
+    """
     # As the overlap and inset are ratios, they do not need to have a conversion here to mm
     top_flap_overlap = 5/75 # Used as reference: 5 mm overlap for a box of 75mm,
     top_flap_inset = 2/75 #  Used as reference: 2 mm inset for a box of 75mm
@@ -21,9 +32,19 @@ def top_bottom_side_flap(inner_width, inner_height):
 
 # create the flap for the left/right sides
 def left_right_side_flap(inner_width, inner_height):
-    global px_to_mm
-    top_flap_overlap = 5/50*px_to_mm # Used as reference: 5 mm overlap for a box of 50mm
-    top_flap_inset = 0/5*px_to_mm # Used as reference: 0 mm inset for a box of 50
+    """
+    This function creates a list with points for the side flaps
+
+    Args:
+    - points: list of points
+    - inner_width: desired width size
+    - inner_height: desired height size
+
+    Returns:
+    list of point
+    """
+    top_flap_overlap = 5/50 # Used as reference: 5 mm overlap for a box of 50mm
+    top_flap_inset = 0/5 # Used as reference: 0 mm inset for a box of 50
     points = [
         [0, 0],
         [top_flap_overlap * inner_height, top_flap_inset * inner_width],
@@ -185,10 +206,10 @@ if __name__ == "__main__":
     if len(sys.argv) < 5 or len(sys.argv) > 6:
         print("usage: {sys.argv[0]} width height depth tabs [filename]\n with width, height, depth as size in mm, with_tabs 0/1, and optionally output filename")
     else:
-        box_width = int(sys.argv[1])
-        box_height = int(sys.argv[2])
-        box_depth = int(sys.argv[3])
-        with_tabs = int(sys.argv[4])
+        box_width = float(sys.argv[1])
+        box_height = float(sys.argv[2])
+        box_depth = float(sys.argv[3])
+        with_tabs = float(sys.argv[4])
         filename = "envelope.svg"
         if len(sys.argv) == 6:
             filename = sys.argv[5]
