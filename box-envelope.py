@@ -203,7 +203,6 @@ def draw_envelope(box_width_mm, box_height_mm, box_depth_mm, with_tabs, filename
     dwg.add(path)
 
     # Add the perforation for the tabs if needed
-    print(lines_tab_perforation)
     if(with_tabs):
         for line in lines_tab_perforation:
             start = [line[0][0]+move_origin_x, line[0][1]+move_origin_y]
