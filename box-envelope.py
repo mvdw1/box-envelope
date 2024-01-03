@@ -109,8 +109,8 @@ def draw_envelope(box_width_mm, box_height_mm, box_depth_mm, with_tabs, filename
     # 
     total_width = box_width + box_depth * 2
     total_height = box_height + box_depth * 2
-
-    dwg = svgwrite.Drawing(filename, profile="tiny")
+    lines_tab_perforation = []
+    dwg = svgwrite.Drawing(filename, size=('100%', '100%'), profile="tiny")
 
     # Calculate position and size for the inner square
     inner_width = box_width
@@ -118,9 +118,6 @@ def draw_envelope(box_width_mm, box_height_mm, box_depth_mm, with_tabs, filename
     x_offset = (total_width - inner_width) / 2
     y_offset = (total_height - inner_height) / 2
 
-    # The inner and outer square (perforation)
-    dwg.add(dwg.rect(insert=(0, 0), size=(total_width, total_height), fill='none', stroke = perforation_color))
-    dwg.add(dwg.rect(insert=(x_offset, y_offset), size=(inner_width, inner_height), fill='none', stroke = perforation_color))
 
     # Envelope
     # top flap
@@ -137,7 +134,7 @@ def draw_envelope(box_width_mm, box_height_mm, box_depth_mm, with_tabs, filename
         start_point =[inner_width+box_depth,0]
         end_point = [inner_width+box_depth, box_depth]
         points_corner12 = [[start_point[0]+tab_width, start_point[1]+ tab_offset],[start_point[0]+tab_width, end_point[1]-tab_offset],[end_point[0], end_point[1]]]
-        dwg.add(dwg.line(start=start_point,end=end_point, stroke=perforation_color))
+        lines_tab_perforation.append([start_point, end_point])
     else:
         points_corner12 = [[inner_width+box_depth, box_depth]]
 
@@ -150,7 +147,7 @@ def draw_envelope(box_width_mm, box_height_mm, box_depth_mm, with_tabs, filename
         start_point =[inner_width+box_depth, inner_height+box_depth]
         end_point = [inner_width+box_depth, inner_height+box_depth*2]
         points_corner23 = [start_point,[start_point[0]+tab_width, start_point[1]+ tab_offset],[start_point[0]+tab_width, end_point[1]-tab_offset],[end_point[0], end_point[1]]]
-        dwg.add(dwg.line(start=start_point,end=end_point, stroke=perforation_color))
+        lines_tab_perforation.append([start_point, end_point])
     else:
         points_corner23 = [[inner_width+box_depth, inner_height+box_depth]]
 
@@ -164,41 +161,55 @@ def draw_envelope(box_width_mm, box_height_mm, box_depth_mm, with_tabs, filename
         start_point =[box_depth, inner_height+box_depth*2]
         end_point = [box_depth, inner_height+box_depth]
         points_corner34 = [[start_point[0]-tab_width, start_point[1]- tab_offset],[start_point[0]-tab_width, end_point[1]+tab_offset],[end_point[0], end_point[1]]]
-        dwg.add(dwg.line(start=start_point,end=end_point, stroke=perforation_color))
+        lines_tab_perforation.append([start_point, end_point])
     else:
         points_corner34 = [[box_depth, inner_height+box_depth]]
-
-
 
     # left flap
     points4 = left_right_side_flap(inner_width, inner_height)
     points4 = mirror(points4, True, True )
     points4 = move(points4, 0,box_depth+inner_height)
 
-
     points_corner41 = []
     if (with_tabs):
         start_point =[box_depth, box_depth]
         end_point = [box_depth, 0]
         points_corner41 = [start_point, [start_point[0]-tab_width, start_point[1]- tab_offset],[start_point[0]-tab_width, end_point[1]+tab_offset],[end_point[0], end_point[1]]]
-        dwg.add(dwg.line(start=start_point,end=end_point, stroke=perforation_color))
+        lines_tab_perforation.append([start_point, end_point])
     else:
         points_corner41 = [[box_depth, box_depth]]
 
-
     point_cornerlast = [points1[0]]
-    points_all = points1 + points_corner12 + points2 + points_corner23 + points3 + points_corner34 + points4 + points_corner41 + point_cornerlast
+    points_envelope = points1 + points_corner12 + points2 + points_corner23 + points3 + points_corner34 + points4 + points_corner41 + point_cornerlast
+
+    # Determine how much the origin should be moved
+    move_origin_x = -min(point[0] for point in points_envelope)
+    move_origin_y = -min(point[1] for point in points_envelope)
+
+    # The inner and outer square (perforation)
+    dwg.add(dwg.rect(insert=(0 + move_origin_x, 0 + move_origin_y), size=(total_width, total_height), fill='none', stroke = perforation_color))
+    dwg.add(dwg.rect(insert=(x_offset + move_origin_x, y_offset + move_origin_y), size=(inner_width, inner_height), fill='none', stroke = perforation_color))
+
+    shifted_points_outline = [[point[0] + move_origin_x, point[1] + move_origin_y] for point in points_envelope]
 
     # Convert polyline to a path
-    path = dwg.path(d='M {} {}'.format(*points_all[0]), fill='none', stroke=cut_color)  # Start the path at the first point
+    path = dwg.path(d='M {} {}'.format(*shifted_points_outline[0]), fill='none', stroke=cut_color)  # Start the path at the first point
 
     # Create the path string
-    for point in points_all[1:]:
+    for point in shifted_points_outline[1:]:
         path.push('L', *point)  # Append line-to commands to the path
 
     # Add path to svg
     dwg.add(path)
 
+    # Add the perforation for the tabs if needed
+    print(lines_tab_perforation)
+    if(with_tabs):
+        for line in lines_tab_perforation:
+            start = [line[0][0]+move_origin_x, line[0][1]+move_origin_y]
+            end = [line[1][0]+move_origin_x, line[1][1]+move_origin_y]
+            dwg.add(dwg.line(start=start,end=end, stroke=perforation_color))
+        
     # Save the SVG document
     dwg.save()
 
